@@ -1,0 +1,78 @@
+{
+  "name": "agent-git",
+  "version": "0.1.0",
+  "description": "A local-first daily task state map built around checkpoints, HEAD, and forks.",
+  "author": "Agent-Git contributors",
+  "license": "MIT",
+  "type": "module",
+  "main": "electron/main.mjs",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Zippppo/Agent-Git.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Zippppo/Agent-Git/issues"
+  },
+  "homepage": "https://github.com/Zippppo/Agent-Git#readme",
+  "scripts": {
+    "dev": "npm run desktop:dev",
+    "web:dev": "vite",
+    "desktop:dev": "concurrently -k \"vite --host 127.0.0.1 --port 5174 --strictPort\" \"wait-on http://127.0.0.1:5174 && cross-env VITE_DEV_SERVER_URL=http://127.0.0.1:5174 electron electron/main.mjs\"",
+    "build": "vite build",
+    "desktop:build": "npm run build && electron-builder --dir",
+    "desktop:dist": "npm run build && electron-builder",
+    "preview": "vite preview",
+    "test": "node --test",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "daily-planning",
+    "local-first",
+    "task-map",
+    "checkpoint",
+    "productivity"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "build": {
+    "appId": "dev.agentgit.app",
+    "productName": "Agent-Git",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "win": {
+      "signAndEditExecutable": false,
+      "target": [
+        "nsis",
+        "zip"
+      ]
+    },
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ]
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "tar.gz"
+      ]
+    }
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.3",
+    "cross-env": "^10.0.0",
+    "electron": "^42.3.3",
+    "electron-builder": "^26.0.12",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.5",
+    "wait-on": "^8.0.4"
+  }
+}

@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A local-first daily task state map built around checkpoints, HEAD, and forks.">
+  <title>Agent-Git</title>
+</head>
+<body>
+  <div class="app" id="app">
+    <header class="topbar">
+      <div class="brand">
+        <button class="brand-mark" id="sidebarToggle" type="button" title="Toggle left panel" aria-label="Toggle left panel">AG</button>
+        <div class="brand-title">
+          <strong>Agent-Git</strong>
+          <span class="save-state" id="saveState" title="Saved locally. Press Ctrl+Z to undo the last in-session change.">Ready</span>
+        </div>
+      </div>
+
+      <div class="daybar">
+        <div class="date-heading" id="dateHeading">Daily Page</div>
+        <select class="day-select" id="daySelect" aria-label="Select daily snapshot"></select>
+        <button class="btn icon" id="prevDayBtn" type="button" title="Previous snapshot" aria-label="Previous snapshot">‹</button>
+        <button class="btn icon" id="nextDayBtn" type="button" title="Next snapshot" aria-label="Next snapshot">›</button>
+        <button class="btn" id="todayBtn" type="button">Today</button>
+      </div>
+
+      <div class="top-actions">
+        <button class="btn" id="collapseDoneBtn" type="button">Done Folds</button>
+        <button class="btn" id="newSnapshotBtn" type="button" title="Open or create today's snapshot. Press Ctrl+Z to undo the last in-session change.">Open Today</button>
+        <button class="btn primary" id="addTaskBtn" type="button" title="Add a task. Press Ctrl+Z to undo the last in-session change.">+ Task</button>
+      </div>
+    </header>
+
+    <div class="workspace">
+      <aside class="sidebar">
+        <div class="sidebar-rail" aria-label="Collapsed left panel">
+          <button class="btn rail" id="sidebarRailToggle" type="button" title="Open left panel" aria-label="Open left panel">☰</button>
+          <button class="btn rail" id="railAddCheckpointBtn" type="button" title="Add checkpoint" aria-label="Add checkpoint">+</button>
+          <button class="btn rail" id="railForkBtn" type="button" title="Fork" aria-label="Fork">⎇</button>
+          <button class="btn rail" id="railSetHeadBtn" type="button" title="Set HEAD" aria-label="Set HEAD">→</button>
+        </div>
+
+        <div class="sidebar-content">
+          <section class="panel">
+            <h2 class="panel-title">Snapshot</h2>
+            <div class="metrics">
+              <div class="metric">
+                <span class="metric-value" id="metricActive">0</span>
+                <span class="metric-label">Active</span>
+              </div>
+              <div class="metric">
+                <span class="metric-value" id="metricHeads">0</span>
+                <span class="metric-label">HEAD</span>
+              </div>
+              <div class="metric">
+                <span class="metric-value" id="metricBlocked">0</span>
+                <span class="metric-label">Blocked</span>
+              </div>
+              <div class="metric">
+                <span class="metric-value" id="metricDone">0</span>
+                <span class="metric-label">Done</span>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <h2 class="panel-title">Days</h2>
+            <div class="day-list" id="dayList"></div>
+          </section>
+
+          <section class="panel">
+            <h2 class="panel-title">Commands</h2>
+            <div class="command-stack">
+              <button class="btn full" id="addCheckpointBtn" type="button" title="Add checkpoint after the selected target (Enter). Press Ctrl+Z to undo the last in-session change.">+ Checkpoint</button>
+              <button class="btn full" id="forkBtn" type="button" title="Fork from the selected checkpoint (Ctrl+Enter). Press Ctrl+Z to undo the last in-session change.">Fork</button>
+              <button class="btn full" id="setHeadBtn" type="button" title="Set the selected checkpoint as HEAD. Press Ctrl+Z to undo the last in-session change.">Set HEAD</button>
+              <button class="btn full" id="sidebarCollapseDoneBtn" type="button">Done Folds</button>
+              <button class="btn full danger" id="completeTaskBtn" type="button" title="Mark the selected task complete. Press Ctrl+Z to undo the last in-session change.">Complete Task</button>
+            </div>
+          </section>
+
+          <section class="panel">
+            <h2 class="panel-title">Data</h2>
+            <div class="command-stack">
+              <button class="btn full" id="exportBtn" type="button" title="Download a JSON backup of all local Agent-Git data before risky changes.">Export Backup JSON</button>
+              <button class="btn full danger" id="resetBtn" type="button" title="Reset demo data after confirmation. Press Ctrl+Z to undo the last in-session change.">Reset Demo</button>
+            </div>
+          </section>
+        </div>
+      </aside>
+
+      <main class="main">
+        <section class="map-header">
+          <div class="map-title">
+            <h1 id="pageTitle">Daily Page</h1>
+            <p id="pageSubtitle">All unfinished work, latest state, and next step in one map.</p>
+          </div>
+          <div class="status-strip" id="statusStrip" aria-label="Task status summary"></div>
+        </section>
+
+        <section class="board-wrap" aria-label="Daily task map">
+          <div class="board" id="board"></div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
+

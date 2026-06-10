@@ -1,0 +1,2357 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Agent-Git MVP</title>
+  <style>
+    :root {
+      --bg: #f6f7f8;
+      --surface: #ffffff;
+      --surface-soft: #f0f3f5;
+      --ink: #1f2933;
+      --muted: #667085;
+      --line: #d9dee5;
+      --line-strong: #c7d0da;
+      --green: #237c5a;
+      --blue: #276fbf;
+      --red: #a3473f;
+      --amber: #ad6d1f;
+      --violet: #6b5fad;
+      --shadow: 0 18px 42px rgba(31, 41, 51, 0.09);
+      --sidebar-expanded: 260px;
+      --sidebar-current: 64px;
+      --inspector-current: 340px;
+      --topbar: 68px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      height: 100%;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.45;
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.48;
+    }
+
+    .app {
+      display: grid;
+      grid-template-rows: var(--topbar) minmax(0, 1fr);
+      height: 100vh;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+
+    .app.sidebar-open {
+      --sidebar-current: var(--sidebar-expanded);
+    }
+
+    .app.inspector-collapsed {
+      --inspector-current: 56px !important;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: var(--sidebar-current) minmax(0, 1fr) auto;
+      gap: 0;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.94);
+      backdrop-filter: blur(10px);
+      z-index: 4;
+      transition: grid-template-columns 180ms ease;
+    }
+
+    .brand {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      align-items: center;
+      min-width: 0;
+      padding: 0 10px;
+      border-right: 1px solid var(--line);
+    }
+
+    .app.sidebar-open .brand {
+      justify-content: flex-start;
+      padding: 0 18px;
+    }
+
+    .brand-mark {
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      width: 38px;
+      height: 38px;
+      border: 1px solid #bfd4ca;
+      border-radius: 8px;
+      background: #eaf4ef;
+      color: var(--green);
+      font-size: 14px;
+      font-weight: 850;
+      padding: 0;
+    }
+
+    .brand-title {
+      min-width: 0;
+    }
+
+    .app:not(.sidebar-open) .brand-title {
+      display: none;
+    }
+
+    .brand-title strong,
+    .panel-title,
+    .date-heading,
+    .task-title,
+    .field label,
+    .metric-value {
+      letter-spacing: 0;
+    }
+
+    .brand-title strong {
+      display: block;
+      font-size: 17px;
+      line-height: 1.1;
+    }
+
+    .save-state {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .daybar {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      min-width: 0;
+      padding: 0 18px;
+    }
+
+    .date-heading {
+      min-width: 140px;
+      font-size: 17px;
+      font-weight: 800;
+    }
+
+    .day-select {
+      width: 174px;
+      min-width: 128px;
+      border: 1px solid var(--line-strong);
+      border-radius: 7px;
+      background: #fff;
+      color: var(--ink);
+      padding: 8px 10px;
+    }
+
+    .top-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      align-items: center;
+      padding: 0 18px;
+      border-left: 1px solid var(--line);
+    }
+
+    .app.inspector-collapsed .top-actions {
+      border-left: 0;
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: var(--sidebar-current) minmax(0, 1fr) var(--inspector-current);
+      min-height: 0;
+      transition: grid-template-columns 180ms ease;
+    }
+
+    .sidebar,
+    .inspector {
+      overflow: auto;
+      background: #fff;
+    }
+
+    .sidebar {
+      border-right: 1px solid var(--line);
+      padding: 12px 10px;
+    }
+
+    .app.sidebar-open .sidebar {
+      padding: 18px;
+    }
+
+    .sidebar-rail {
+      display: grid;
+      gap: 10px;
+      align-content: start;
+    }
+
+    .app.sidebar-open .sidebar-rail {
+      display: none;
+    }
+
+    .sidebar-content {
+      display: none;
+    }
+
+    .app.sidebar-open .sidebar-content {
+      display: block;
+    }
+
+    .main {
+      min-width: 0;
+      overflow: hidden;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+    }
+
+    .inspector {
+      position: relative;
+      border-left: 1px solid var(--line);
+      padding: 18px;
+    }
+
+    .inspector-resizer {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: -4px;
+      width: 8px;
+      cursor: col-resize;
+      z-index: 3;
+    }
+
+    .inspector-resizer::before {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 3px;
+      width: 1px;
+      background: transparent;
+      content: "";
+    }
+
+    .inspector-resizer:hover::before {
+      background: var(--blue);
+    }
+
+    .app.inspector-collapsed .inspector {
+      overflow: hidden;
+      padding: 12px 9px;
+    }
+
+    .app.inspector-collapsed .inspector-resizer {
+      display: none;
+    }
+
+    .inspector-rail {
+      display: none;
+    }
+
+    .app.inspector-collapsed .inspector-rail {
+      display: grid;
+      gap: 10px;
+      justify-items: center;
+    }
+
+    .app.inspector-collapsed .inspector-content {
+      display: none;
+    }
+
+    .panel {
+      border-bottom: 1px solid var(--line);
+      padding: 0 0 18px;
+      margin-bottom: 18px;
+    }
+
+    .panel-title {
+      margin: 0 0 12px;
+      color: #344054;
+      font-size: 13px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .metric {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfd;
+      padding: 11px;
+    }
+
+    .metric-value {
+      display: block;
+      font-size: 24px;
+      font-weight: 850;
+      line-height: 1;
+    }
+
+    .metric-label {
+      display: block;
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .day-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .day-item {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px;
+      align-items: center;
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 10px;
+      color: var(--ink);
+      text-align: left;
+    }
+
+    .day-item.active {
+      border-color: rgba(35, 124, 90, 0.4);
+      background: #eef8f3;
+    }
+
+    .day-item strong {
+      display: block;
+      overflow: hidden;
+      font-size: 14px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .day-item span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .day-count {
+      display: grid;
+      place-items: center;
+      min-width: 28px;
+      height: 28px;
+      border-radius: 7px;
+      background: var(--surface-soft);
+      color: #475467;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .command-stack {
+      display: grid;
+      gap: 8px;
+    }
+
+    .map-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      align-items: center;
+      border-bottom: 1px solid var(--line);
+      background: #fff;
+      padding: 16px 20px;
+    }
+
+    .map-title {
+      min-width: 0;
+    }
+
+    .map-title h1 {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+
+    .map-title p {
+      overflow: hidden;
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .status-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+      align-items: center;
+    }
+
+    .chip {
+      display: inline-flex;
+      gap: 6px;
+      align-items: center;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #fff;
+      padding: 7px 10px;
+      color: #475467;
+      font-size: 13px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .chip-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: var(--muted);
+    }
+
+    .chip.active .chip-dot {
+      background: var(--green);
+    }
+
+    .chip.blocked .chip-dot {
+      background: var(--red);
+    }
+
+    .chip.paused .chip-dot {
+      background: var(--amber);
+    }
+
+    .chip.done .chip-dot {
+      background: var(--blue);
+    }
+
+    .board-wrap {
+      overflow: auto;
+      padding: 20px;
+    }
+
+    .board {
+      display: grid;
+      grid-auto-columns: 288px;
+      grid-auto-flow: column;
+      gap: 16px;
+      align-items: start;
+      min-width: min-content;
+      min-height: 100%;
+      padding-bottom: 24px;
+    }
+
+    .empty-board {
+      display: grid;
+      place-items: center;
+      width: min(620px, calc(100vw - 40px));
+      min-height: 360px;
+      border: 1px dashed var(--line-strong);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.58);
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .empty-board strong {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--ink);
+      font-size: 18px;
+    }
+
+    .task-card {
+      overflow: hidden;
+      border: 1px solid #cfd7df;
+      border-radius: 8px;
+      background: #fff;
+      box-shadow: var(--shadow);
+    }
+
+    .task-card.selected {
+      outline: 2px solid rgba(39, 111, 191, 0.34);
+      outline-offset: 2px;
+    }
+
+    .task-card.dragging,
+    .checkpoint.dragging {
+      opacity: 0.55;
+    }
+
+    .task-header {
+      display: grid;
+      gap: 10px;
+      width: 100%;
+      border: 0;
+      border-bottom: 1px solid var(--line);
+      background: #fff;
+      color: inherit;
+      padding: 15px;
+      text-align: left;
+    }
+
+    .task-topline {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .rank {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 850;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      max-width: 100%;
+      border-radius: 999px;
+      padding: 4px 8px;
+      background: #f1f5f9;
+      color: #475467;
+      font-size: 12px;
+      font-weight: 850;
+      white-space: nowrap;
+    }
+
+    .badge.active {
+      background: #eaf7f0;
+      color: var(--green);
+    }
+
+    .badge.blocked,
+    .badge.abandoned {
+      background: #fff0ee;
+      color: var(--red);
+    }
+
+    .badge.paused,
+    .badge.finding {
+      background: #fff6e7;
+      color: var(--amber);
+    }
+
+    .badge.done,
+    .badge.current {
+      background: #edf5ff;
+      color: var(--blue);
+    }
+
+    .badge.planned {
+      background: #f2f2fb;
+      color: var(--violet);
+    }
+
+    .task-title {
+      margin: 0;
+      overflow-wrap: anywhere;
+      font-size: 19px;
+      line-height: 1.18;
+    }
+
+    .task-header.inline-editing {
+      background: #f7fbff;
+    }
+
+    .inline-edit-control {
+      width: 100%;
+      border: 1px solid rgba(39, 111, 191, 0.46);
+      border-radius: 7px;
+      background: #fff;
+      color: var(--ink);
+      padding: 8px 9px;
+      resize: vertical;
+      box-shadow: 0 0 0 3px rgba(39, 111, 191, 0.08);
+    }
+
+    .inline-edit-control:focus {
+      outline: 2px solid rgba(39, 111, 191, 0.42);
+      outline-offset: 2px;
+    }
+
+    .task-title-editor {
+      min-height: 44px;
+      font-size: 19px;
+      font-weight: 800;
+      line-height: 1.18;
+    }
+
+    .task-goal {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .timeline {
+      display: grid;
+      gap: 0;
+      padding: 10px 0;
+    }
+
+    .checkpoint {
+      position: relative;
+      display: grid;
+      grid-template-columns: 24px minmax(0, 1fr);
+      gap: 9px;
+      align-items: start;
+      width: calc(100% - (var(--level, 0) * 24px));
+      min-height: 44px;
+      margin-left: calc(var(--level, 0) * 24px);
+      border: 0;
+      border-left: 3px solid transparent;
+      background: transparent;
+      padding: 8px 12px 8px 13px;
+      color: var(--ink);
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .checkpoint::before {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 24px;
+      width: 2px;
+      background: #e1e6eb;
+      content: "";
+    }
+
+    .checkpoint.branch::after {
+      position: absolute;
+      top: 20px;
+      left: -19px;
+      width: 22px;
+      height: 2px;
+      background: #d4dde6;
+      content: "";
+    }
+
+    .checkpoint:hover {
+      background: #f8fafc;
+    }
+
+    .checkpoint.selected {
+      border-left-color: var(--blue);
+      background: #f2f7fd;
+    }
+
+    .checkpoint.inline-editing {
+      background: #f7fbff;
+      cursor: text;
+    }
+
+    .checkpoint.abandoned .checkpoint-text {
+      color: #8a95a3;
+      text-decoration: line-through;
+    }
+
+    .marker {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      place-items: center;
+      width: 24px;
+      height: 24px;
+      border: 2px solid #cad4dd;
+      border-radius: 999px;
+      background: #fff;
+      color: #667085;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 900;
+      line-height: 1;
+      padding: 0;
+    }
+
+    .marker:hover {
+      box-shadow: 0 0 0 4px rgba(39, 111, 191, 0.08);
+    }
+
+    .status-popover {
+      position: absolute;
+      top: 4px;
+      left: 42px;
+      z-index: 8;
+      display: flex;
+      gap: 5px;
+      align-items: center;
+      border: 1px solid var(--line-strong);
+      border-radius: 8px;
+      background: #fff;
+      box-shadow: var(--shadow);
+      padding: 6px;
+    }
+
+    .status-option {
+      display: grid;
+      place-items: center;
+      width: 30px;
+      height: 30px;
+      border: 1px solid transparent;
+      border-radius: 7px;
+      background: #f8fafc;
+      color: #475467;
+      font-size: 13px;
+      font-weight: 900;
+      padding: 0;
+    }
+
+    .status-option:hover {
+      border-color: var(--line-strong);
+      background: #fff;
+    }
+
+    .status-option.active {
+      border-color: rgba(39, 111, 191, 0.44);
+      background: #edf5ff;
+      color: var(--blue);
+    }
+
+    .checkpoint.done .marker {
+      border-color: var(--green);
+      background: var(--green);
+      color: #fff;
+    }
+
+    .checkpoint.current .marker {
+      border-color: var(--blue);
+      background: #ecf5ff;
+      color: var(--blue);
+    }
+
+    .checkpoint.finding .marker {
+      border-color: var(--amber);
+      background: #fff6e7;
+      color: var(--amber);
+    }
+
+    .checkpoint.abandoned .marker {
+      border-color: var(--red);
+      background: #fff0ee;
+      color: var(--red);
+    }
+
+    .checkpoint.planned .marker {
+      border-color: var(--violet);
+      background: #f2f2fb;
+      color: var(--violet);
+    }
+
+    .checkpoint-body {
+      min-width: 0;
+    }
+
+    .checkpoint-text {
+      overflow-wrap: anywhere;
+      font-size: 14px;
+      line-height: 1.35;
+    }
+
+    .checkpoint-text-editor {
+      min-height: 40px;
+      font-size: 14px;
+      line-height: 1.35;
+    }
+
+    .checkpoint-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 6px;
+    }
+
+    .task-footer {
+      border-top: 1px solid var(--line);
+      background: #fbfcfd;
+      padding: 12px 15px;
+      color: #344054;
+      font-size: 13px;
+    }
+
+    .task-footer strong {
+      color: var(--ink);
+    }
+
+    .btn {
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 36px;
+      border: 1px solid var(--line-strong);
+      border-radius: 7px;
+      background: #fff;
+      color: #263543;
+      padding: 8px 11px;
+      font-size: 14px;
+      font-weight: 760;
+      line-height: 1;
+      white-space: nowrap;
+    }
+
+    .btn:hover:not(:disabled) {
+      background: #f8fafc;
+    }
+
+    .btn.primary {
+      border-color: #1f6b4e;
+      background: var(--green);
+      color: #fff;
+    }
+
+    .btn.primary:hover:not(:disabled) {
+      background: #1f6b4e;
+    }
+
+    .btn.blue {
+      border-color: #23639d;
+      background: var(--blue);
+      color: #fff;
+    }
+
+    .btn.blue:hover:not(:disabled) {
+      background: #23639d;
+    }
+
+    .btn.danger {
+      border-color: #d8b3ae;
+      color: var(--red);
+    }
+
+    .btn.icon {
+      width: 36px;
+      padding: 0;
+      font-size: 18px;
+    }
+
+    .btn.rail {
+      width: 42px;
+      min-height: 42px;
+      padding: 0;
+      font-size: 17px;
+    }
+
+    .btn.full {
+      width: 100%;
+    }
+
+    .inspector-empty {
+      display: grid;
+      place-items: center;
+      min-height: 260px;
+      border: 1px dashed var(--line-strong);
+      border-radius: 8px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .editor {
+      display: grid;
+      gap: 14px;
+    }
+
+    .editor-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 12px;
+    }
+
+    .editor-head h2 {
+      margin: 0;
+      font-size: 18px;
+      letter-spacing: 0;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+    }
+
+    .field label {
+      color: #344054;
+      font-size: 12px;
+      font-weight: 850;
+      text-transform: uppercase;
+    }
+
+    .field input,
+    .field select,
+    .field textarea {
+      width: 100%;
+      border: 1px solid var(--line-strong);
+      border-radius: 7px;
+      background: #fff;
+      color: var(--ink);
+      padding: 9px 10px;
+    }
+
+    .field textarea {
+      min-height: 90px;
+      resize: vertical;
+    }
+
+    .field input:focus,
+    .field select:focus,
+    .field textarea:focus,
+    .btn:focus-visible,
+    .day-item:focus-visible,
+    .checkpoint:focus-visible {
+      outline: 2px solid rgba(39, 111, 191, 0.42);
+      outline-offset: 2px;
+    }
+
+    .actions-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .small-note {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .toast {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      z-index: 20;
+      transform: translateY(12px);
+      opacity: 0;
+      pointer-events: none;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      box-shadow: var(--shadow);
+      padding: 10px 12px;
+      color: #344054;
+      font-size: 13px;
+      transition: opacity 180ms ease, transform 180ms ease;
+    }
+
+    .toast.visible {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    @media (max-width: 1120px) {
+      :root {
+        --sidebar-expanded: 230px;
+        --inspector-current: 310px;
+      }
+    }
+
+    @media (max-width: 920px) {
+      .topbar {
+        grid-template-columns: 1fr;
+        height: auto;
+      }
+
+      .brand,
+      .daybar,
+      .top-actions {
+        min-height: 56px;
+        border: 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .workspace {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar,
+      .inspector {
+        border: 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .sidebar {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+      }
+
+      .panel {
+        margin: 0;
+      }
+
+      .inspector {
+        order: -1;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .sidebar,
+      .inspector,
+      .board-wrap,
+      .map-header {
+        padding: 14px;
+      }
+
+      .sidebar {
+        grid-template-columns: 1fr;
+      }
+
+      .daybar,
+      .top-actions {
+        flex-wrap: wrap;
+        justify-content: flex-start;
+        padding-top: 10px;
+        padding-bottom: 10px;
+      }
+
+      .map-header {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .status-strip {
+        justify-content: flex-start;
+      }
+
+      .board {
+        grid-auto-columns: minmax(270px, calc(100vw - 28px));
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app" id="app">
+    <header class="topbar">
+      <div class="brand">
+        <button class="brand-mark" id="sidebarToggle" type="button" title="Toggle left panel" aria-label="Toggle left panel">AG</button>
+        <div class="brand-title">
+          <strong>Agent-Git</strong>
+          <span class="save-state" id="saveState">Ready</span>
+        </div>
+      </div>
+
+      <div class="daybar">
+        <div class="date-heading" id="dateHeading">Daily Page</div>
+        <select class="day-select" id="daySelect" aria-label="Select daily snapshot"></select>
+        <button class="btn icon" id="prevDayBtn" type="button" title="Previous snapshot" aria-label="Previous snapshot">‹</button>
+        <button class="btn icon" id="nextDayBtn" type="button" title="Next snapshot" aria-label="Next snapshot">›</button>
+        <button class="btn" id="todayBtn" type="button">Today</button>
+      </div>
+
+      <div class="top-actions">
+        <button class="btn icon" id="inspectorToggle" type="button" title="Toggle inspector" aria-label="Toggle inspector">›</button>
+        <button class="btn" id="newSnapshotBtn" type="button">New Snapshot</button>
+        <button class="btn primary" id="addTaskBtn" type="button">+ Task</button>
+      </div>
+    </header>
+
+    <div class="workspace">
+      <aside class="sidebar">
+        <div class="sidebar-rail" aria-label="Collapsed left panel">
+          <button class="btn rail" id="sidebarRailToggle" type="button" title="Open left panel" aria-label="Open left panel">☰</button>
+          <button class="btn rail" id="railAddCheckpointBtn" type="button" title="Add checkpoint" aria-label="Add checkpoint">+</button>
+          <button class="btn rail" id="railForkBtn" type="button" title="Fork" aria-label="Fork">⎇</button>
+          <button class="btn rail" id="railSetHeadBtn" type="button" title="Set HEAD" aria-label="Set HEAD">→</button>
+        </div>
+
+        <div class="sidebar-content">
+          <section class="panel">
+            <h2 class="panel-title">Snapshot</h2>
+            <div class="metrics">
+              <div class="metric">
+                <span class="metric-value" id="metricActive">0</span>
+                <span class="metric-label">Active</span>
+              </div>
+              <div class="metric">
+                <span class="metric-value" id="metricHeads">0</span>
+                <span class="metric-label">HEAD</span>
+              </div>
+              <div class="metric">
+                <span class="metric-value" id="metricBlocked">0</span>
+                <span class="metric-label">Blocked</span>
+              </div>
+              <div class="metric">
+                <span class="metric-value" id="metricDone">0</span>
+                <span class="metric-label">Done</span>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <h2 class="panel-title">Days</h2>
+            <div class="day-list" id="dayList"></div>
+          </section>
+
+          <section class="panel">
+            <h2 class="panel-title">Commands</h2>
+            <div class="command-stack">
+              <button class="btn full" id="addCheckpointBtn" type="button" title="Enter">+ Checkpoint</button>
+              <button class="btn full" id="forkBtn" type="button" title="Tab">Fork</button>
+              <button class="btn full" id="setHeadBtn" type="button">Set HEAD</button>
+              <button class="btn full danger" id="completeTaskBtn" type="button">Complete Task</button>
+            </div>
+          </section>
+
+          <section class="panel">
+            <h2 class="panel-title">Data</h2>
+            <div class="command-stack">
+              <button class="btn full" id="exportBtn" type="button">Export JSON</button>
+              <button class="btn full danger" id="resetBtn" type="button">Reset Demo</button>
+            </div>
+          </section>
+        </div>
+      </aside>
+
+      <main class="main">
+        <section class="map-header">
+          <div class="map-title">
+            <h1 id="pageTitle">Daily Page</h1>
+            <p id="pageSubtitle">All unfinished work, latest state, and next step in one map.</p>
+          </div>
+          <div class="status-strip" id="statusStrip" aria-label="Task status summary"></div>
+        </section>
+
+        <section class="board-wrap" aria-label="Daily task map">
+          <div class="board" id="board"></div>
+        </section>
+      </main>
+
+      <aside class="inspector" id="inspector"></aside>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const STORAGE_KEY = "agent-git:mvp:v1";
+    const PREFS_KEY = "agent-git:mvp:prefs:v1";
+    const statusLabels = {
+      active: "Active",
+      blocked: "Blocked",
+      paused: "Paused",
+      done: "Done"
+    };
+    const checkpointLabels = {
+      planned: "Planned",
+      done: "Done",
+      current: "HEAD",
+      finding: "Finding",
+      abandoned: "Abandoned"
+    };
+    const checkpointMarks = {
+      planned: "·",
+      done: "✓",
+      current: "→",
+      finding: "!",
+      abandoned: "x"
+    };
+
+    const dom = {
+      app: document.getElementById("app"),
+      saveState: document.getElementById("saveState"),
+      sidebarToggle: document.getElementById("sidebarToggle"),
+      sidebarRailToggle: document.getElementById("sidebarRailToggle"),
+      dateHeading: document.getElementById("dateHeading"),
+      daySelect: document.getElementById("daySelect"),
+      prevDayBtn: document.getElementById("prevDayBtn"),
+      nextDayBtn: document.getElementById("nextDayBtn"),
+      todayBtn: document.getElementById("todayBtn"),
+      inspectorToggle: document.getElementById("inspectorToggle"),
+      newSnapshotBtn: document.getElementById("newSnapshotBtn"),
+      addTaskBtn: document.getElementById("addTaskBtn"),
+      addCheckpointBtn: document.getElementById("addCheckpointBtn"),
+      forkBtn: document.getElementById("forkBtn"),
+      setHeadBtn: document.getElementById("setHeadBtn"),
+      completeTaskBtn: document.getElementById("completeTaskBtn"),
+      railAddCheckpointBtn: document.getElementById("railAddCheckpointBtn"),
+      railForkBtn: document.getElementById("railForkBtn"),
+      railSetHeadBtn: document.getElementById("railSetHeadBtn"),
+      exportBtn: document.getElementById("exportBtn"),
+      resetBtn: document.getElementById("resetBtn"),
+      metricActive: document.getElementById("metricActive"),
+      metricHeads: document.getElementById("metricHeads"),
+      metricBlocked: document.getElementById("metricBlocked"),
+      metricDone: document.getElementById("metricDone"),
+      dayList: document.getElementById("dayList"),
+      pageTitle: document.getElementById("pageTitle"),
+      pageSubtitle: document.getElementById("pageSubtitle"),
+      statusStrip: document.getElementById("statusStrip"),
+      board: document.getElementById("board"),
+      inspector: document.getElementById("inspector"),
+      toast: document.getElementById("toast")
+    };
+
+    let prefs = loadPrefs();
+    let state = loadState();
+    let selection = restoreSelection();
+    let inlineEdit = null;
+    let statusMenu = null;
+    let dragTaskId = null;
+    let dragCheckpoint = null;
+    let resizeStart = null;
+    let toastTimer = null;
+
+    applyPanelPrefs();
+    render();
+
+    dom.sidebarToggle.addEventListener("click", toggleSidebar);
+    dom.sidebarRailToggle.addEventListener("click", toggleSidebar);
+    dom.daySelect.addEventListener("change", (event) => {
+      state.currentDate = event.target.value;
+      selection = sanitizeSelection(selection);
+      persist();
+      render();
+    });
+
+    dom.prevDayBtn.addEventListener("click", () => shiftDay(-1));
+    dom.nextDayBtn.addEventListener("click", () => shiftDay(1));
+    dom.todayBtn.addEventListener("click", openToday);
+    dom.inspectorToggle.addEventListener("click", toggleInspector);
+    dom.newSnapshotBtn.addEventListener("click", () => createDailySnapshot(getLocalDate()));
+    dom.addTaskBtn.addEventListener("click", addTask);
+    dom.addCheckpointBtn.addEventListener("click", () => addCheckpointFromSelection(false));
+    dom.forkBtn.addEventListener("click", () => addCheckpointFromSelection(true));
+    dom.setHeadBtn.addEventListener("click", setSelectedHead);
+    dom.completeTaskBtn.addEventListener("click", completeSelectedTask);
+    dom.railAddCheckpointBtn.addEventListener("click", () => addCheckpointFromSelection(false));
+    dom.railForkBtn.addEventListener("click", () => addCheckpointFromSelection(true));
+    dom.railSetHeadBtn.addEventListener("click", setSelectedHead);
+    dom.exportBtn.addEventListener("click", exportJson);
+    dom.resetBtn.addEventListener("click", resetDemo);
+
+    document.addEventListener("keydown", (event) => {
+      if (isTypingTarget(event.target)) return;
+      if (event.key === "Escape" && statusMenu) {
+        event.preventDefault();
+        closeStatusMenu();
+        return;
+      }
+      if (event.key === "Enter") {
+        event.preventDefault();
+        addCheckpointFromSelection(false);
+      }
+      if (event.key === "Tab") {
+        event.preventDefault();
+        addCheckpointFromSelection(true);
+      }
+      if (event.key === " ") {
+        event.preventDefault();
+        startInlineEdit();
+      }
+    });
+
+    document.addEventListener("click", (event) => {
+      if (!statusMenu) return;
+      if (event.target.closest(".status-popover") || event.target.closest(".marker")) return;
+      closeStatusMenu();
+    });
+
+    function uid(prefix) {
+      return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+    }
+
+    function getLocalDate(date = new Date()) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    }
+
+    function nowIso() {
+      return new Date().toISOString();
+    }
+
+    function loadPrefs() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(PREFS_KEY));
+        return {
+          sidebarOpen: Boolean(saved?.sidebarOpen),
+          inspectorCollapsed: Boolean(saved?.inspectorCollapsed),
+          inspectorWidth: clampNumber(saved?.inspectorWidth, 280, 560, 340)
+        };
+      } catch {
+        return {
+          sidebarOpen: false,
+          inspectorCollapsed: false,
+          inspectorWidth: 340
+        };
+      }
+    }
+
+    function persistPrefs() {
+      localStorage.setItem(PREFS_KEY, JSON.stringify(prefs));
+    }
+
+    function applyPanelPrefs() {
+      dom.app.classList.toggle("sidebar-open", prefs.sidebarOpen);
+      dom.app.classList.toggle("inspector-collapsed", prefs.inspectorCollapsed);
+      dom.app.style.setProperty("--inspector-current", `${prefs.inspectorWidth}px`);
+      dom.inspectorToggle.textContent = prefs.inspectorCollapsed ? "‹" : "›";
+      dom.inspectorToggle.title = prefs.inspectorCollapsed ? "Open inspector" : "Collapse inspector";
+      dom.inspectorToggle.setAttribute("aria-label", dom.inspectorToggle.title);
+      dom.sidebarToggle.title = prefs.sidebarOpen ? "Collapse left panel" : "Open left panel";
+      dom.sidebarToggle.setAttribute("aria-label", dom.sidebarToggle.title);
+    }
+
+    function clampNumber(value, min, max, fallback) {
+      const number = Number(value);
+      if (!Number.isFinite(number)) return fallback;
+      return Math.min(max, Math.max(min, number));
+    }
+
+    function toggleSidebar() {
+      prefs.sidebarOpen = !prefs.sidebarOpen;
+      persistPrefs();
+      applyPanelPrefs();
+    }
+
+    function toggleInspector() {
+      prefs.inspectorCollapsed = !prefs.inspectorCollapsed;
+      persistPrefs();
+      applyPanelPrefs();
+      renderInspector();
+    }
+
+    function startInspectorResize(event) {
+      if (prefs.inspectorCollapsed) return;
+      event.preventDefault();
+      resizeStart = {
+        x: event.clientX,
+        width: prefs.inspectorWidth
+      };
+      document.addEventListener("mousemove", resizeInspector);
+      document.addEventListener("mouseup", stopInspectorResize);
+    }
+
+    function resizeInspector(event) {
+      if (!resizeStart) return;
+      const delta = resizeStart.x - event.clientX;
+      prefs.inspectorWidth = clampNumber(resizeStart.width + delta, 280, 560, 340);
+      dom.app.style.setProperty("--inspector-current", `${prefs.inspectorWidth}px`);
+    }
+
+    function stopInspectorResize() {
+      if (!resizeStart) return;
+      resizeStart = null;
+      persistPrefs();
+      document.removeEventListener("mousemove", resizeInspector);
+      document.removeEventListener("mouseup", stopInspectorResize);
+    }
+
+    function loadState() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY));
+        if (parsed && parsed.days && parsed.tasks && parsed.currentDate) {
+          return parsed;
+        }
+      } catch (error) {
+        console.warn("Agent-Git local state could not be parsed.", error);
+      }
+      return seedState();
+    }
+
+    function seedState() {
+      const today = getLocalDate();
+      const tasks = {};
+      const day = { date: today, taskIds: [], createdAt: nowIso() };
+
+      [
+        {
+          title: "Open Source Launch",
+          goal: "Prepare a clean public repository and first tagged build.",
+          status: "active",
+          next: "Run the release checklist and publish notes.",
+          checkpoints: [
+            ["Audit local-only files", "done"],
+            ["Sanitize demo data", "done"],
+            ["Prepare first public tag", "current"],
+            ["Draft release notes", "planned"]
+          ]
+        },
+        {
+          title: "Daily Recovery Flow",
+          goal: "Make the morning resume path easier to scan.",
+          status: "active",
+          next: "Compare yesterday and today HEAD labels.",
+          checkpoints: [
+            ["Map current resume steps", "done"],
+            ["Reduce old checkpoint noise", "current"],
+            ["Test keyboard-only flow", "planned"]
+          ]
+        },
+        {
+          title: "Attachment Handling",
+          goal: "Keep screenshot and image evidence local and easy to open.",
+          status: "blocked",
+          next: "Decide the safest import/export format.",
+          checkpoints: [
+            ["Paste image into checkpoint", "done"],
+            ["Store file under app userData", "finding"],
+            ["Design export backup story", "current"]
+          ]
+        },
+        {
+          title: "Branch View Polish",
+          goal: "Clarify forked checkpoint lines without adding project-management complexity.",
+          status: "paused",
+          next: "Revisit after core task editing stabilizes.",
+          checkpoints: [
+            ["Sketch branch depth rules", "current"]
+          ]
+        }
+      ].forEach((taskSeed) => {
+        const task = createTaskRecord(taskSeed);
+        tasks[task.id] = task;
+        day.taskIds.push(task.id);
+      });
+
+      return {
+        currentDate: today,
+        days: { [today]: day },
+        tasks
+      };
+    }
+
+    function createTaskRecord(input = {}) {
+      const taskId = uid("task");
+      const checkpoints = (input.checkpoints || [["Define first checkpoint", "current"]]).map((item, index) => ({
+        id: uid("cp"),
+        text: item[0],
+        state: item[1] || "planned",
+        branchFrom: null,
+        depth: 0,
+        createdAt: nowIso(),
+        order: index
+      }));
+
+      return {
+        id: taskId,
+        title: input.title || "New Task",
+        goal: input.goal || "",
+        status: input.status || "active",
+        next: input.next || "",
+        checkpoints,
+        createdAt: nowIso()
+      };
+    }
+
+    function persist() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      sessionStorage.setItem(`${STORAGE_KEY}:selection`, JSON.stringify(selection));
+      dom.saveState.textContent = `Saved ${new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
+    }
+
+    function restoreSelection() {
+      try {
+        return sanitizeSelection(JSON.parse(sessionStorage.getItem(`${STORAGE_KEY}:selection`)));
+      } catch {
+        return null;
+      }
+    }
+
+    function sanitizeSelection(candidate) {
+      const day = currentDay();
+      if (!day) return null;
+      if (!candidate) {
+        const firstTaskId = day.taskIds[0];
+        return firstTaskId ? { type: "task", taskId: firstTaskId } : null;
+      }
+      if (candidate.type === "task" && day.taskIds.includes(candidate.taskId)) {
+        return candidate;
+      }
+      if (candidate.type === "checkpoint" && day.taskIds.includes(candidate.taskId)) {
+        const task = state.tasks[candidate.taskId];
+        if (task && task.checkpoints.some((checkpoint) => checkpoint.id === candidate.checkpointId)) {
+          return candidate;
+        }
+      }
+      const firstTaskId = day.taskIds[0];
+      return firstTaskId ? { type: "task", taskId: firstTaskId } : null;
+    }
+
+    function currentDay() {
+      return state.days[state.currentDate];
+    }
+
+    function currentTasks() {
+      const day = currentDay();
+      if (!day) return [];
+      return day.taskIds.map((taskId) => state.tasks[taskId]).filter(Boolean);
+    }
+
+    function sortedDates() {
+      return Object.keys(state.days).sort();
+    }
+
+    function render() {
+      selection = sanitizeSelection(selection);
+      if (!isInlineEditValid()) inlineEdit = null;
+      if (!isStatusMenuValid()) statusMenu = null;
+      renderHeader();
+      renderSidebar();
+      renderBoard();
+      renderInspector();
+      updateCommandState();
+      persist();
+    }
+
+    function isInlineEditValid() {
+      if (!inlineEdit) return true;
+      const day = currentDay();
+      if (!day || !day.taskIds.includes(inlineEdit.taskId)) return false;
+      const task = state.tasks[inlineEdit.taskId];
+      if (!task) return false;
+      if (inlineEdit.type === "task") return true;
+      return task.checkpoints.some((checkpoint) => checkpoint.id === inlineEdit.checkpointId);
+    }
+
+    function isStatusMenuValid() {
+      if (!statusMenu) return true;
+      const day = currentDay();
+      if (!day || !day.taskIds.includes(statusMenu.taskId)) return false;
+      const task = state.tasks[statusMenu.taskId];
+      if (!task) return false;
+      return task.checkpoints.some((checkpoint) => checkpoint.id === statusMenu.checkpointId);
+    }
+
+    function renderHeader() {
+      const dates = sortedDates();
+      const date = state.currentDate;
+      dom.dateHeading.textContent = date;
+      dom.pageTitle.textContent = `${date} Daily Page`;
+      dom.pageSubtitle.textContent = buildSubtitle();
+      dom.daySelect.innerHTML = "";
+      dates.forEach((dayDate) => {
+        const option = document.createElement("option");
+        option.value = dayDate;
+        option.textContent = dayDate;
+        option.selected = dayDate === date;
+        dom.daySelect.append(option);
+      });
+      const index = dates.indexOf(date);
+      dom.prevDayBtn.disabled = index <= 0;
+      dom.nextDayBtn.disabled = index < 0 || index >= dates.length - 1;
+    }
+
+    function renderSidebar() {
+      const tasks = currentTasks();
+      const counts = getCounts(tasks);
+      dom.metricActive.textContent = counts.active;
+      dom.metricHeads.textContent = counts.heads;
+      dom.metricBlocked.textContent = counts.blocked;
+      dom.metricDone.textContent = counts.done;
+
+      dom.dayList.innerHTML = "";
+      sortedDates().reverse().forEach((date) => {
+        const day = state.days[date];
+        const button = document.createElement("button");
+        button.className = `day-item${date === state.currentDate ? " active" : ""}`;
+        button.type = "button";
+        button.addEventListener("click", () => {
+          state.currentDate = date;
+          selection = sanitizeSelection(selection);
+          render();
+        });
+
+        const text = document.createElement("div");
+        const label = document.createElement("strong");
+        label.textContent = date;
+        const sub = document.createElement("span");
+        sub.textContent = `${day.taskIds.length} tasks`;
+        text.append(label, sub);
+
+        const count = document.createElement("span");
+        count.className = "day-count";
+        count.textContent = day.taskIds.length;
+        button.append(text, count);
+        dom.dayList.append(button);
+      });
+
+      renderStatusStrip(counts);
+    }
+
+    function renderStatusStrip(counts) {
+      dom.statusStrip.innerHTML = "";
+      [
+        ["active", "Active", counts.active],
+        ["blocked", "Blocked", counts.blocked],
+        ["paused", "Paused", counts.paused],
+        ["done", "Done", counts.done]
+      ].forEach(([key, label, value]) => {
+        const chip = document.createElement("span");
+        chip.className = `chip ${key}`;
+        const dot = document.createElement("span");
+        dot.className = "chip-dot";
+        chip.append(dot, document.createTextNode(`${label} ${value}`));
+        dom.statusStrip.append(chip);
+      });
+    }
+
+    function getCounts(tasks) {
+      return {
+        active: tasks.filter((task) => task.status === "active").length,
+        blocked: tasks.filter((task) => task.status === "blocked").length,
+        paused: tasks.filter((task) => task.status === "paused").length,
+        done: tasks.filter((task) => task.status === "done").length,
+        heads: tasks.reduce((sum, task) => sum + task.checkpoints.filter((checkpoint) => checkpoint.state === "current").length, 0)
+      };
+    }
+
+    function buildSubtitle() {
+      const tasks = currentTasks();
+      const unfinished = tasks.filter((task) => task.status !== "done").length;
+      const next = tasks.find((task) => task.status !== "done" && task.next);
+      if (!tasks.length) return "No task roots in this snapshot.";
+      if (!next) return `${unfinished} unfinished tasks.`;
+      return `${unfinished} unfinished tasks. Next: ${next.next}`;
+    }
+
+    function renderBoard() {
+      const tasks = currentTasks();
+      dom.board.innerHTML = "";
+
+      if (!tasks.length) {
+        const empty = document.createElement("div");
+        empty.className = "empty-board";
+        const inner = document.createElement("div");
+        const title = document.createElement("strong");
+        title.textContent = "No task roots";
+        const copy = document.createElement("span");
+        copy.textContent = "Create a task to start today's map.";
+        inner.append(title, copy);
+        empty.append(inner);
+        dom.board.append(empty);
+        return;
+      }
+
+      tasks.forEach((task, index) => {
+        const isTaskInlineEditing = inlineEdit?.type === "task" && inlineEdit.taskId === task.id;
+        const card = document.createElement("article");
+        card.className = `task-card${selection?.type === "task" && selection.taskId === task.id ? " selected" : ""}`;
+        card.draggable = !isTaskInlineEditing;
+        card.dataset.taskId = task.id;
+
+        card.addEventListener("dragstart", (event) => {
+          dragTaskId = task.id;
+          card.classList.add("dragging");
+          event.dataTransfer.effectAllowed = "move";
+        });
+        card.addEventListener("dragend", () => {
+          dragTaskId = null;
+          card.classList.remove("dragging");
+        });
+        card.addEventListener("dragover", (event) => {
+          if (dragTaskId) event.preventDefault();
+        });
+        card.addEventListener("drop", (event) => {
+          if (!dragTaskId) return;
+          event.preventDefault();
+          moveTask(dragTaskId, task.id);
+        });
+
+        const header = document.createElement(isTaskInlineEditing ? "div" : "button");
+        header.className = `task-header${isTaskInlineEditing ? " inline-editing" : ""}`;
+        if (!isTaskInlineEditing) {
+          header.type = "button";
+          header.addEventListener("click", () => {
+            inlineEdit = null;
+            selection = { type: "task", taskId: task.id };
+            render();
+          });
+        }
+
+        const topline = document.createElement("div");
+        topline.className = "task-topline";
+        const rank = document.createElement("span");
+        rank.className = "rank";
+        rank.textContent = String(index + 1).padStart(2, "0");
+        const badge = document.createElement("span");
+        badge.className = `badge ${task.status}`;
+        badge.textContent = statusLabels[task.status];
+        topline.append(rank, badge);
+
+        const title = isTaskInlineEditing
+          ? createInlineTextEditor(task.title, "task-title-editor", (value) => {
+              task.title = value || "Untitled Task";
+            })
+          : document.createElement("h2");
+        if (!isTaskInlineEditing) {
+          title.className = "task-title";
+          title.textContent = task.title;
+        }
+        const goal = document.createElement("p");
+        goal.className = "task-goal";
+        goal.textContent = task.goal || "No goal set.";
+
+        header.append(topline, title, goal);
+        card.append(header, renderTimeline(task));
+
+        const footer = document.createElement("div");
+        footer.className = "task-footer";
+        const strong = document.createElement("strong");
+        strong.textContent = "Next: ";
+        footer.append(strong, document.createTextNode(task.next || "No next step set."));
+        card.append(footer);
+
+        dom.board.append(card);
+      });
+    }
+
+    function renderTimeline(task) {
+      const timeline = document.createElement("div");
+      timeline.className = "timeline";
+
+      task.checkpoints.forEach((checkpoint) => {
+        const isCheckpointInlineEditing = inlineEdit?.type === "checkpoint"
+          && inlineEdit.taskId === task.id
+          && inlineEdit.checkpointId === checkpoint.id;
+        const isStatusMenuOpen = statusMenu?.taskId === task.id && statusMenu.checkpointId === checkpoint.id;
+        const node = document.createElement("div");
+        node.className = [
+          "checkpoint",
+          checkpoint.state,
+          checkpoint.branchFrom ? "branch" : "",
+          isCheckpointInlineEditing ? "inline-editing" : "",
+          selection?.type === "checkpoint" && selection.checkpointId === checkpoint.id ? "selected" : ""
+        ].filter(Boolean).join(" ");
+        node.draggable = !isCheckpointInlineEditing;
+        node.setAttribute("role", "button");
+        node.tabIndex = 0;
+        node.dataset.taskId = task.id;
+        node.dataset.checkpointId = checkpoint.id;
+        node.style.setProperty("--level", String(Math.min(checkpoint.depth || 0, 3)));
+
+        if (!isCheckpointInlineEditing) {
+          node.addEventListener("click", () => {
+            inlineEdit = null;
+            statusMenu = null;
+            selection = { type: "checkpoint", taskId: task.id, checkpointId: checkpoint.id };
+            render();
+          });
+          node.addEventListener("dragstart", (event) => {
+            dragCheckpoint = { taskId: task.id, checkpointId: checkpoint.id };
+            node.classList.add("dragging");
+            event.dataTransfer.effectAllowed = "move";
+          });
+          node.addEventListener("dragend", () => {
+            dragCheckpoint = null;
+            node.classList.remove("dragging");
+          });
+          node.addEventListener("dragover", (event) => {
+            if (dragCheckpoint?.taskId === task.id) event.preventDefault();
+          });
+          node.addEventListener("drop", (event) => {
+            if (!dragCheckpoint || dragCheckpoint.taskId !== task.id) return;
+            event.preventDefault();
+            moveCheckpoint(task.id, dragCheckpoint.checkpointId, checkpoint.id);
+          });
+        }
+
+        const marker = document.createElement("button");
+        marker.className = "marker";
+        marker.type = "button";
+        marker.title = "Change checkpoint status";
+        marker.setAttribute("aria-label", `Change status: ${checkpointLabels[checkpoint.state]}`);
+        marker.textContent = checkpointMarks[checkpoint.state];
+        marker.addEventListener("click", (event) => {
+          event.stopPropagation();
+          inlineEdit = null;
+          selection = { type: "checkpoint", taskId: task.id, checkpointId: checkpoint.id };
+          statusMenu = isStatusMenuOpen ? null : { taskId: task.id, checkpointId: checkpoint.id };
+          render();
+        });
+
+        const body = document.createElement("span");
+        body.className = "checkpoint-body";
+        const text = isCheckpointInlineEditing
+          ? createInlineTextEditor(checkpoint.text, "checkpoint-text-editor", (value) => {
+              checkpoint.text = value || "Untitled checkpoint";
+            })
+          : document.createElement("span");
+        if (!isCheckpointInlineEditing) {
+          text.className = "checkpoint-text";
+          text.textContent = checkpoint.text;
+        }
+        const meta = document.createElement("span");
+        meta.className = "checkpoint-meta";
+        const badge = document.createElement("span");
+        badge.className = `badge ${checkpoint.state}`;
+        badge.textContent = checkpointLabels[checkpoint.state];
+        meta.append(badge);
+        if (checkpoint.branchFrom) {
+          const branch = document.createElement("span");
+          branch.className = "badge planned";
+          branch.textContent = "Fork";
+          meta.append(branch);
+        }
+        body.append(text, meta);
+        node.append(marker, body);
+        if (isStatusMenuOpen) {
+          node.append(renderStatusPopover(task, checkpoint));
+        }
+        timeline.append(node);
+      });
+
+      return timeline;
+    }
+
+    function renderStatusPopover(task, checkpoint) {
+      const popover = document.createElement("div");
+      popover.className = "status-popover";
+      popover.addEventListener("click", (event) => event.stopPropagation());
+
+      Object.keys(checkpointLabels).forEach((stateKey) => {
+        const option = document.createElement("button");
+        option.type = "button";
+        option.className = `status-option${checkpoint.state === stateKey ? " active" : ""}`;
+        option.title = checkpointLabels[stateKey];
+        option.setAttribute("aria-label", checkpointLabels[stateKey]);
+        option.textContent = checkpointMarks[stateKey];
+        option.addEventListener("click", () => updateCheckpointStatus(task.id, checkpoint.id, stateKey));
+        popover.append(option);
+      });
+
+      return popover;
+    }
+
+    function updateCheckpointStatus(taskId, checkpointId, nextState) {
+      const task = state.tasks[taskId];
+      if (!task) return;
+      const checkpoint = task.checkpoints.find((item) => item.id === checkpointId);
+      if (!checkpoint) return;
+
+      if (nextState === "current") {
+        setHead(taskId, checkpointId, false);
+      } else {
+        checkpoint.state = nextState;
+        persist();
+      }
+
+      statusMenu = null;
+      selection = { type: "checkpoint", taskId, checkpointId };
+      render();
+      showToast(`${checkpointLabels[nextState]} set.`);
+    }
+
+    function closeStatusMenu() {
+      statusMenu = null;
+      renderBoard();
+    }
+
+    function createInlineTextEditor(value, extraClass, applyValue) {
+      const textarea = document.createElement("textarea");
+      textarea.id = "inlineEditInput";
+      textarea.className = `inline-edit-control ${extraClass}`;
+      textarea.value = value || "";
+      textarea.addEventListener("click", (event) => event.stopPropagation());
+      textarea.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+          event.preventDefault();
+          cancelInlineEdit();
+          return;
+        }
+        if (event.key === "Enter" && !event.shiftKey) {
+          event.preventDefault();
+          applyValue(textarea.value.trim());
+          finishInlineEdit(true);
+        }
+      });
+      textarea.addEventListener("blur", () => {
+        if (!inlineEdit) return;
+        applyValue(textarea.value.trim());
+        finishInlineEdit(true);
+      });
+      return textarea;
+    }
+
+    function startInlineEdit() {
+      const selected = getSelected();
+      if (!selected) return;
+      inlineEdit = selected.type === "checkpoint"
+        ? { type: "checkpoint", taskId: selected.task.id, checkpointId: selected.checkpoint.id }
+        : { type: "task", taskId: selected.task.id };
+      renderBoard();
+      renderInspector();
+      window.setTimeout(() => {
+        const target = document.getElementById("inlineEditInput");
+        if (target) {
+          target.focus();
+          target.select();
+        }
+      }, 0);
+    }
+
+    function finishInlineEdit(shouldSave) {
+      inlineEdit = null;
+      if (shouldSave) {
+        persist();
+        render();
+        showToast("Updated.");
+      } else {
+        renderBoard();
+        renderInspector();
+      }
+    }
+
+    function cancelInlineEdit() {
+      finishInlineEdit(false);
+    }
+
+    function renderInspector() {
+      const selected = getSelected();
+      dom.inspector.innerHTML = "";
+
+      const resizer = document.createElement("div");
+      resizer.className = "inspector-resizer";
+      resizer.title = "Resize inspector";
+      resizer.addEventListener("mousedown", startInspectorResize);
+
+      const rail = document.createElement("div");
+      rail.className = "inspector-rail";
+      const toggle = document.createElement("button");
+      toggle.className = "btn rail";
+      toggle.type = "button";
+      toggle.title = "Open inspector";
+      toggle.setAttribute("aria-label", "Open inspector");
+      toggle.textContent = "‹";
+      toggle.addEventListener("click", toggleInspector);
+      rail.append(toggle);
+
+      const content = document.createElement("div");
+      content.className = "inspector-content";
+
+      if (!selected) {
+        const empty = document.createElement("div");
+        empty.className = "inspector-empty";
+        empty.textContent = "Select a task or checkpoint.";
+        content.append(empty);
+      } else if (selected.type === "task") {
+        content.append(renderTaskEditor(selected.task));
+      } else {
+        content.append(renderCheckpointEditor(selected.task, selected.checkpoint));
+      }
+
+      dom.inspector.append(resizer, rail, content);
+    }
+
+    function renderTaskEditor(task) {
+      const form = document.createElement("div");
+      form.className = "editor";
+      form.dataset.editor = "task";
+
+      const head = document.createElement("div");
+      head.className = "editor-head";
+      const title = document.createElement("h2");
+      title.textContent = "Task Root";
+      const badge = document.createElement("span");
+      badge.className = `badge ${task.status}`;
+      badge.textContent = statusLabels[task.status];
+      head.append(title, badge);
+
+      const titleField = createInputField("Title", "taskTitleInput", task.title, (value) => {
+        task.title = value || "Untitled Task";
+        persist();
+        renderBoard();
+        renderSidebar();
+      });
+      const goalField = createTextareaField("Goal", "taskGoalInput", task.goal, (value) => {
+        task.goal = value;
+        persist();
+        renderBoard();
+      });
+      const statusField = createSelectField("Status", task.status, statusLabels, (value) => {
+        task.status = value;
+        persist();
+        render();
+      });
+      const nextField = createTextareaField("Next", "taskNextInput", task.next, (value) => {
+        task.next = value;
+        persist();
+        renderBoard();
+        renderHeader();
+      });
+
+      const actions = document.createElement("div");
+      actions.className = "actions-grid";
+      actions.append(
+        actionButton("+ Checkpoint", "primary", () => addCheckpoint(task.id)),
+        actionButton("Complete", "", () => {
+          task.status = "done";
+          persist();
+          render();
+        })
+      );
+
+      form.append(head, titleField, goalField, statusField, nextField, actions);
+      return form;
+    }
+
+    function renderCheckpointEditor(task, checkpoint) {
+      const form = document.createElement("div");
+      form.className = "editor";
+      form.dataset.editor = "checkpoint";
+
+      const head = document.createElement("div");
+      head.className = "editor-head";
+      const title = document.createElement("h2");
+      title.textContent = "Checkpoint";
+      const badge = document.createElement("span");
+      badge.className = `badge ${checkpoint.state}`;
+      badge.textContent = checkpointLabels[checkpoint.state];
+      head.append(title, badge);
+
+      const textField = createTextareaField("Text", "checkpointTextInput", checkpoint.text, (value) => {
+        checkpoint.text = value || "Untitled checkpoint";
+        persist();
+        renderBoard();
+      });
+      const stateField = createSelectField("State", checkpoint.state, checkpointLabels, (value) => {
+        checkpoint.state = value;
+        if (value === "current") setHead(task.id, checkpoint.id, false);
+        persist();
+        render();
+      });
+
+      const actions = document.createElement("div");
+      actions.className = "actions-grid";
+      actions.append(
+        actionButton("+ Next", "primary", () => addCheckpoint(task.id, checkpoint.id, false)),
+        actionButton("Fork", "", () => addCheckpoint(task.id, checkpoint.id, true)),
+        actionButton("Set HEAD", "blue", () => setHead(task.id, checkpoint.id, true)),
+        actionButton("Abandon", "", () => {
+          checkpoint.state = "abandoned";
+          persist();
+          render();
+        })
+      );
+
+      const note = document.createElement("p");
+      note.className = "small-note";
+      note.textContent = `Task: ${task.title}`;
+
+      form.append(head, textField, stateField, actions, note);
+      return form;
+    }
+
+    function createInputField(labelText, id, value, onInput) {
+      const field = document.createElement("label");
+      field.className = "field";
+      const label = document.createElement("span");
+      label.textContent = labelText;
+      const input = document.createElement("input");
+      input.id = id;
+      input.value = value || "";
+      input.addEventListener("input", () => onInput(input.value));
+      field.append(label, input);
+      return field;
+    }
+
+    function createTextareaField(labelText, id, value, onInput) {
+      const field = document.createElement("label");
+      field.className = "field";
+      const label = document.createElement("span");
+      label.textContent = labelText;
+      const textarea = document.createElement("textarea");
+      textarea.id = id;
+      textarea.value = value || "";
+      textarea.addEventListener("input", () => onInput(textarea.value));
+      field.append(label, textarea);
+      return field;
+    }
+
+    function createSelectField(labelText, value, options, onChange) {
+      const field = document.createElement("label");
+      field.className = "field";
+      const label = document.createElement("span");
+      label.textContent = labelText;
+      const select = document.createElement("select");
+      Object.entries(options).forEach(([key, text]) => {
+        const option = document.createElement("option");
+        option.value = key;
+        option.textContent = text;
+        option.selected = key === value;
+        select.append(option);
+      });
+      select.addEventListener("change", () => onChange(select.value));
+      field.append(label, select);
+      return field;
+    }
+
+    function actionButton(label, variant, handler) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = `btn ${variant}`.trim();
+      button.textContent = label;
+      button.addEventListener("click", handler);
+      return button;
+    }
+
+    function getSelected() {
+      if (!selection) return null;
+      const task = state.tasks[selection.taskId];
+      if (!task) return null;
+      if (selection.type === "task") return { type: "task", task };
+      const checkpoint = task.checkpoints.find((item) => item.id === selection.checkpointId);
+      if (!checkpoint) return null;
+      return { type: "checkpoint", task, checkpoint };
+    }
+
+    function updateCommandState() {
+      const selected = getSelected();
+      const isCheckpoint = selected?.type === "checkpoint";
+      const hasTask = Boolean(selected?.task);
+      dom.addCheckpointBtn.disabled = !hasTask;
+      dom.forkBtn.disabled = !isCheckpoint;
+      dom.setHeadBtn.disabled = !isCheckpoint;
+      dom.completeTaskBtn.disabled = !hasTask;
+      dom.railAddCheckpointBtn.disabled = !hasTask;
+      dom.railForkBtn.disabled = !isCheckpoint;
+      dom.railSetHeadBtn.disabled = !isCheckpoint;
+    }
+
+    function addTask() {
+      const task = createTaskRecord({
+        title: "New Task",
+        goal: "Define the goal.",
+        status: "active",
+        next: "Choose the next move.",
+        checkpoints: [["Initial checkpoint", "current"]]
+      });
+      state.tasks[task.id] = task;
+      currentDay().taskIds.push(task.id);
+      selection = { type: "task", taskId: task.id };
+      persist();
+      render();
+      focusEditor();
+      showToast("Task added.");
+    }
+
+    function addCheckpointFromSelection(asFork) {
+      const selected = getSelected();
+      if (!selected) return;
+      if (selected.type === "task") {
+        addCheckpoint(selected.task.id, null, false);
+        return;
+      }
+      addCheckpoint(selected.task.id, selected.checkpoint.id, asFork);
+    }
+
+    function addCheckpoint(taskId, afterCheckpointId = null, asFork = false) {
+      const task = state.tasks[taskId];
+      if (!task) return;
+      const afterIndex = afterCheckpointId
+        ? task.checkpoints.findIndex((checkpoint) => checkpoint.id === afterCheckpointId)
+        : task.checkpoints.length - 1;
+      const parent = afterIndex >= 0 ? task.checkpoints[afterIndex] : null;
+      const checkpoint = {
+        id: uid("cp"),
+        text: asFork ? "New fork checkpoint" : "New checkpoint",
+        state: "planned",
+        branchFrom: asFork && parent ? parent.id : null,
+        depth: asFork && parent ? Math.min((parent.depth || 0) + 1, 3) : (parent?.depth || 0),
+        createdAt: nowIso(),
+        order: afterIndex + 1
+      };
+      task.checkpoints.splice(afterIndex + 1, 0, checkpoint);
+      selection = { type: "checkpoint", taskId, checkpointId: checkpoint.id };
+      persist();
+      render();
+      focusEditor();
+      showToast(asFork ? "Fork created." : "Checkpoint added.");
+    }
+
+    function setSelectedHead() {
+      const selected = getSelected();
+      if (selected?.type !== "checkpoint") return;
+      setHead(selected.task.id, selected.checkpoint.id, true);
+    }
+
+    function setHead(taskId, checkpointId, shouldRender) {
+      const task = state.tasks[taskId];
+      if (!task) return;
+      task.checkpoints.forEach((checkpoint) => {
+        if (checkpoint.id === checkpointId) {
+          checkpoint.state = "current";
+        } else if (checkpoint.state === "current") {
+          checkpoint.state = "done";
+        }
+      });
+      if (task.status === "done") task.status = "active";
+      persist();
+      if (shouldRender) {
+        render();
+        showToast("HEAD updated.");
+      }
+    }
+
+    function completeSelectedTask() {
+      const selected = getSelected();
+      if (!selected?.task) return;
+      selected.task.status = "done";
+      persist();
+      render();
+      showToast("Task completed.");
+    }
+
+    function moveTask(fromId, toId) {
+      const ids = currentDay().taskIds;
+      const fromIndex = ids.indexOf(fromId);
+      const toIndex = ids.indexOf(toId);
+      if (fromIndex < 0 || toIndex < 0 || fromIndex === toIndex) return;
+      const [moved] = ids.splice(fromIndex, 1);
+      ids.splice(toIndex, 0, moved);
+      persist();
+      render();
+    }
+
+    function moveCheckpoint(taskId, fromId, toId) {
+      const task = state.tasks[taskId];
+      if (!task) return;
+      const fromIndex = task.checkpoints.findIndex((checkpoint) => checkpoint.id === fromId);
+      const toIndex = task.checkpoints.findIndex((checkpoint) => checkpoint.id === toId);
+      if (fromIndex < 0 || toIndex < 0 || fromIndex === toIndex) return;
+      const [moved] = task.checkpoints.splice(fromIndex, 1);
+      task.checkpoints.splice(toIndex, 0, moved);
+      persist();
+      render();
+    }
+
+    function createDailySnapshot(date) {
+      if (state.days[date]) {
+        state.currentDate = date;
+        selection = sanitizeSelection(selection);
+        render();
+        showToast("Snapshot opened.");
+        return;
+      }
+
+      const previousDate = sortedDates().filter((item) => item < date).pop() || sortedDates().at(-1);
+      const previousDay = previousDate ? state.days[previousDate] : null;
+      const taskIds = [];
+
+      if (previousDay) {
+        previousDay.taskIds.forEach((taskId) => {
+          const task = state.tasks[taskId];
+          if (!task || task.status === "done") return;
+          const cloned = cloneTask(task);
+          state.tasks[cloned.id] = cloned;
+          taskIds.push(cloned.id);
+        });
+      }
+
+      state.days[date] = { date, taskIds, createdAt: nowIso(), inheritedFrom: previousDate || null };
+      state.currentDate = date;
+      selection = sanitizeSelection(null);
+      persist();
+      render();
+      showToast("Daily snapshot created.");
+    }
+
+    function cloneTask(task) {
+      const nextTaskId = uid("task");
+      const idMap = new Map();
+      const checkpoints = task.checkpoints.map((checkpoint) => {
+        const nextId = uid("cp");
+        idMap.set(checkpoint.id, nextId);
+        return {
+          ...checkpoint,
+          id: nextId,
+          createdAt: nowIso()
+        };
+      });
+      checkpoints.forEach((checkpoint) => {
+        checkpoint.branchFrom = checkpoint.branchFrom ? idMap.get(checkpoint.branchFrom) || null : null;
+      });
+      return {
+        ...task,
+        id: nextTaskId,
+        status: task.status === "done" ? "active" : task.status,
+        checkpoints,
+        createdAt: nowIso()
+      };
+    }
+
+    function shiftDay(delta) {
+      const dates = sortedDates();
+      const index = dates.indexOf(state.currentDate);
+      const next = dates[index + delta];
+      if (!next) return;
+      state.currentDate = next;
+      selection = sanitizeSelection(selection);
+      render();
+    }
+
+    function openToday() {
+      createDailySnapshot(getLocalDate());
+    }
+
+    function exportJson() {
+      const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `agent-git-${state.currentDate}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+      showToast("JSON exported.");
+    }
+
+    function resetDemo() {
+      const confirmed = window.confirm("Reset Agent-Git demo data?");
+      if (!confirmed) return;
+      localStorage.removeItem(STORAGE_KEY);
+      sessionStorage.removeItem(`${STORAGE_KEY}:selection`);
+      state = seedState();
+      selection = sanitizeSelection(null);
+      render();
+      showToast("Demo reset.");
+    }
+
+    function focusEditor() {
+      startInlineEdit();
+    }
+
+    function isTypingTarget(target) {
+      return ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName) || target.isContentEditable;
+    }
+
+    function showToast(message) {
+      window.clearTimeout(toastTimer);
+      dom.toast.textContent = message;
+      dom.toast.classList.add("visible");
+      toastTimer = window.setTimeout(() => {
+        dom.toast.classList.remove("visible");
+      }, 1800);
+    }
+  </script>
+</body>
+</html>
