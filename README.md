@@ -1,24 +1,77 @@
 # Agent-Git
 
-Agent-Git is a local-first desktop app for exploratory work. It uses Git-style checkpoints, `HEAD`, and forks to help you recover working context quickly instead of rebuilding it from scattered notes.
+Agent-Git is a local-first desktop app for exploratory work. It uses Git-style
+checkpoints, `HEAD`, and forks to help you recover working context quickly
+instead of rebuilding it from scattered notes.
 
-The current app is a productized MVP migrated from the original single-file prototype into an Electron desktop app that others can install, run, and package.
+The project is currently an early MVP. It is usable for local daily planning
+and product feedback, but the renderer is still being split out of its migrated
+prototype structure.
+
+## Contents
+
+- [Why Agent-Git](#why-agent-git)
+- [Features](#features)
+- [Privacy and Data](#privacy-and-data)
+- [Quick Start](#quick-start)
+- [Development Commands](#development-commands)
+- [Packaging](#packaging)
+- [Project Layout](#project-layout)
+- [Known Limitations](#known-limitations)
+- [Contributing](#contributing)
+- [License](#license)
+
+## Why Agent-Git
+
+Complex work often branches, stalls, and loops back. A normal todo list records
+the next action, but it rarely captures why the current path exists.
+
+Agent-Git gives each day a task map:
+
+- Task roots represent parallel work streams.
+- Checkpoints record decisions, findings, completed work, and planned steps.
+- `HEAD` marks the current continuation point for each task.
+- Forks preserve alternate paths without mixing them into the main line.
+
+The goal is simple: when you open the app, you should be able to understand
+where your work stopped and where to continue.
 
 ## Features
 
 - Daily snapshot page with unfinished tasks inherited into a new day.
-- Horizontal Task Root map with vertical checkpoint timelines.
+- Horizontal task root map with vertical checkpoint timelines.
 - Checkpoint states: Planned, Done, HEAD, Finding, Abandoned.
 - Task states: Active, Blocked, Paused, Done.
 - Keyboard-first growth:
-  - `Enter`: add next checkpoint for the selected task or checkpoint.
-  - `Tab`: fork from the selected checkpoint.
+  - `Enter`: add the next checkpoint for the selected task or checkpoint.
+  - `Ctrl+Enter`: fork from the selected checkpoint.
   - `Space`: edit the selected task or checkpoint inline.
-- Mouse interactions for selection, status changes, drag reorder, side panel toggles, and inspector resize.
+- Mouse interactions for selection, status changes, drag reorder, side panel
+  toggles, and inspector resize.
 - Local persistence with `localStorage`.
+- Image attachments in the Electron app.
 - JSON export for backup and debugging.
 
-## Run The Desktop App
+## Privacy and Data
+
+Agent-Git is local-first. The current app does not include accounts, cloud sync,
+telemetry, analytics, or a remote backend.
+
+Current storage locations:
+
+```text
+localStorage:
+  agent-git:mvp:v1
+  agent-git:mvp:prefs:v1
+
+Electron userData:
+  attachments/
+```
+
+The JSON export action downloads a local backup of the app state. Treat exported
+JSON files as personal data if your tasks contain sensitive notes.
+
+## Quick Start
 
 Requirements:
 
@@ -37,7 +90,42 @@ Start the desktop app in development mode:
 npm run dev
 ```
 
-This opens an Agent-Git desktop window. Vite is only used behind the scenes for renderer hot reload during development.
+This opens an Agent-Git desktop window. Vite is used behind the scenes for
+renderer hot reload during development.
+
+## Development Commands
+
+Run the browser renderer only:
+
+```bash
+npm run web:dev
+```
+
+Run tests:
+
+```bash
+npm test
+```
+
+Run TypeScript checks:
+
+```bash
+npm run typecheck
+```
+
+Build the renderer:
+
+```bash
+npm run build
+```
+
+Preview the production renderer build:
+
+```bash
+npm run preview
+```
+
+## Packaging
 
 Build an unpacked desktop app:
 
@@ -57,62 +145,55 @@ Build distributable packages:
 npm run desktop:dist
 ```
 
-For local Windows builds this project disables executable signing by default, so the app can be built without code-signing certificates or elevated symlink privileges. Production releases should add signing in CI.
-
-## Web Renderer Commands
-
-The UI renderer can still be run in a browser for development and debugging:
-
-```bash
-npm run web:dev
-```
-
-Build only the renderer:
-
-```bash
-npm run build
-```
-
-Preview the production build:
-
-```bash
-npm run preview
-```
+For local Windows builds this project disables executable signing by default, so
+the app can be built without code-signing certificates or elevated symlink
+privileges. Production releases should add signing in CI.
 
 ## Project Layout
 
 ```text
 .
-├─ index.html                 # Vite app shell
-├─ electron/
-│  └─ main.mjs                # Electron desktop main process
-├─ src/
-│  ├─ main.ts                 # App behavior and rendering
-│  └─ styles.css              # App styles migrated from the MVP
-├─ docs/
-│  └─ mvp-single-file.html    # Preserved original single-file prototype
-├─ PRODUCT.md                 # Product definition and roadmap
-└─ package.json
+|- index.html                 # Vite app shell
+|- electron/
+|  |- main.mjs                # Electron desktop main process
+|  |- preload.cjs             # Isolated renderer bridge
+|  `- zoom-shortcuts.mjs      # Shared zoom shortcut logic
+|- src/
+|  |- main.ts                 # App behavior and rendering
+|  `- styles.css              # App styles migrated from the MVP
+|- test/
+|  `- zoom-shortcuts.test.mjs # Node test suite
+|- docs/
+|  `- mvp-single-file.html    # Preserved original single-file prototype
+|- PRODUCT.md                 # Product definition and roadmap
+|- CONTRIBUTING.md            # Contribution guide
+|- SECURITY.md                # Security policy
+|- CHANGELOG.md               # Release notes
+`- package.json
 ```
 
-## Data Model
+## Known Limitations
 
-Agent-Git currently stores data in the browser under:
+- The renderer is still a large migrated file and needs domain, storage, and
+  view modules.
+- Cross-day lineage is not fully modeled yet. Inherited tasks are currently
+  copied into the new day.
+- Forks are currently represented as visual indentation, not a complete branch
+  tree.
+- Search, import, archive, and undo history are still limited.
+- JSON export is useful for development backup, but it is not a polished user
+  backup format yet.
+- No prebuilt release binaries are published yet. Build from source for now.
 
-```text
-agent-git:mvp:v1
-agent-git:mvp:prefs:v1
-```
+See [PRODUCT.md](PRODUCT.md) for the full product direction.
 
-This keeps the app local-first and dependency-free. Cloud sync, accounts, permissions, and team collaboration are intentionally outside the current MVP.
+## Contributing
 
-## Product Direction
+Contributions are welcome while the project is still small and evolving. Start
+with [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request.
 
-The next engineering priorities are:
+For security issues, see [SECURITY.md](SECURITY.md).
 
-- Split the migrated renderer into typed domain, storage, and view modules.
-- Add import, delete/archive, undo, and safer backup flows.
-- Improve cross-day lineage instead of cloning inherited tasks blindly.
-- Add focused tests around daily snapshot inheritance and `HEAD` uniqueness.
+## License
 
-See [PRODUCT.md](PRODUCT.md) for the full product plan.
+Agent-Git is released under the [MIT License](LICENSE).
