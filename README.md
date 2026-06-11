@@ -70,7 +70,7 @@ Windows packages are produced by the GitHub Actions release workflow whenever a
 `v*` tag is pushed.
 
 1. Open [Releases](https://github.com/Zippppo/Agent-Git/releases/latest).
-2. Download `Agent-Git-<version>-win-x64.exe` for the installer, or the Windows
+2. Download `Agent-Git-0.1.0-win-x64.exe` for the installer, or the Windows
    `.zip` for a portable package.
 3. Run Agent-Git. The app stores its current MVP data locally.
 
