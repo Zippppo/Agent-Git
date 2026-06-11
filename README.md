@@ -210,6 +210,10 @@ with [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request.
 
 For security issues, see [SECURITY.md](SECURITY.md).
 
+## Maintainer
+
+- [Zippppo](https://github.com/Zippppo)
+
 ## License
 
 Agent-Git is released under the [MIT License](LICENSE).
