@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Zippppo/Agent-Git/releases/latest"><img alt="GitHub Release" src="https://img.shields.io/github/v/release/Zippppo/Agent-Git"></a>
+  <a href="https://github.com/Zippppo/Agent-Git/releases/latest"><img alt="Release v0.1.0" src="https://img.shields.io/badge/release-v0.1.0-blue"></a>
   <img alt="Windows" src="https://img.shields.io/badge/platform-Windows-blue">
   <a href="LICENSE"><img alt="License" src="https://img.shields.io/github/license/Zippppo/Agent-Git"></a>
   <img alt="Node.js 20+" src="https://img.shields.io/badge/node-%3E%3D20-339933">
