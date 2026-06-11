@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Zippppo/Agent-Git/releases/latest"><img alt="Release v0.1.0" src="https://img.shields.io/badge/release-v0.1.0-blue"></a>
+  <a href="https://github.com/Zippppo/Agent-Git/releases/latest"><img alt="Release v0.1.1" src="https://img.shields.io/badge/release-v0.1.1-blue"></a>
   <img alt="Windows" src="https://img.shields.io/badge/platform-Windows-blue">
   <a href="LICENSE"><img alt="License" src="https://img.shields.io/github/license/Zippppo/Agent-Git"></a>
   <img alt="Node.js 20+" src="https://img.shields.io/badge/node-%3E%3D20-339933">
@@ -70,7 +70,7 @@ Windows packages are produced by the GitHub Actions release workflow whenever a
 `v*` tag is pushed.
 
 1. Open [Releases](https://github.com/Zippppo/Agent-Git/releases/latest).
-2. Download `Agent-Git-0.1.0-win-x64.exe` for the installer, or the Windows
+2. Download `Agent-Git-0.1.1-win-x64.exe` for the installer, or the Windows
    `.zip` for a portable package.
 3. Run Agent-Git. The app stores its current MVP data locally.
 

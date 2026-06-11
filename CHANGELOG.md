@@ -6,6 +6,8 @@ This project uses a lightweight changelog format while it is pre-1.0.
 
 ## Unreleased
 
+## 0.1.1 - 2026-06-11
+
 - Documented open source contribution, security, privacy, and development
   workflow expectations.
 - Added GitHub Actions automation for Windows release artifacts.
@@ -13,6 +15,7 @@ This project uses a lightweight changelog format while it is pre-1.0.
 - Refined the application icon around the text/image merge and branch concept.
 - Added README hero artwork, product screenshot, release badges, and Windows
   download guidance.
+- Stabilized the README release badge and Windows installer file name.
 
 ## 0.1.0 - 2026-06-10
 
