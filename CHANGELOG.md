@@ -10,6 +10,7 @@ This project uses a lightweight changelog format while it is pre-1.0.
   workflow expectations.
 - Added GitHub Actions automation for Windows release artifacts.
 - Added Windows app icon assets and release artifact naming.
+- Refined the application icon around the text/image merge and branch concept.
 - Added README hero artwork, product screenshot, release badges, and Windows
   download guidance.
 

@@ -1,28 +1,50 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
   <title id="title">Agent-Git icon</title>
-  <desc id="desc">Warm square app icon with branching checkpoint nodes.</desc>
+  <desc id="desc">Two work streams merge into a central checkpoint and branch into outcomes.</desc>
   <defs>
-    <linearGradient id="bg" x1="24" y1="16" x2="232" y2="240" gradientUnits="userSpaceOnUse">
+    <linearGradient id="bg" x1="24" y1="12" x2="232" y2="242" gradientUnits="userSpaceOnUse">
       <stop offset="0" stop-color="#fffefa"/>
-      <stop offset="1" stop-color="#f1eee4"/>
+      <stop offset="1" stop-color="#eee9dc"/>
     </linearGradient>
-    <linearGradient id="accent" x1="56" y1="56" x2="202" y2="202" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#c96442"/>
-      <stop offset="1" stop-color="#3266ad"/>
+    <linearGradient id="panel" x1="36" y1="46" x2="214" y2="212" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#f4f0e7"/>
     </linearGradient>
-    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#4a3a2a" flood-opacity=".16"/>
+    <linearGradient id="head" x1="108" y1="62" x2="148" y2="194" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#3f75c9"/>
+      <stop offset="1" stop-color="#24579f"/>
+    </linearGradient>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="10" stdDeviation="11" flood-color="#4a3a2a" flood-opacity=".18"/>
+    </filter>
+    <filter id="nodeShadow" x="-45%" y="-45%" width="190%" height="190%">
+      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#20314a" flood-opacity=".18"/>
     </filter>
   </defs>
   <rect width="256" height="256" rx="56" fill="url(#bg)"/>
-  <path d="M59 84h62c24 0 42 17 42 40v4" fill="none" stroke="#c96442" stroke-width="18" stroke-linecap="round"/>
-  <path d="M59 172h62c24 0 42-17 42-40v-4" fill="none" stroke="#3266ad" stroke-width="18" stroke-linecap="round"/>
-  <path d="M161 128h38" fill="none" stroke="#437426" stroke-width="18" stroke-linecap="round"/>
-  <g filter="url(#shadow)">
-    <circle cx="59" cy="84" r="24" fill="#fffefa" stroke="#c96442" stroke-width="10"/>
-    <circle cx="59" cy="172" r="24" fill="#fffefa" stroke="#3266ad" stroke-width="10"/>
-    <circle cx="161" cy="128" r="30" fill="#fffefa" stroke="url(#accent)" stroke-width="12"/>
-    <circle cx="199" cy="128" r="22" fill="#fffefa" stroke="#437426" stroke-width="10"/>
+  <path d="M42 80h170M42 128h170M42 176h170M80 42v170M128 42v170M176 42v170" fill="none" stroke="#d9d2c4" stroke-width="1.2" opacity=".22"/>
+  <g filter="url(#softShadow)">
+    <rect x="26" y="50" width="68" height="56" rx="16" fill="url(#panel)" stroke="#ded6c6" stroke-width="1.5"/>
+    <rect x="26" y="150" width="68" height="56" rx="16" fill="url(#panel)" stroke="#ded6c6" stroke-width="1.5"/>
+    <rect x="162" y="50" width="68" height="56" rx="16" fill="url(#panel)" stroke="#ded6c6" stroke-width="1.5"/>
+    <rect x="162" y="150" width="68" height="56" rx="16" fill="url(#panel)" stroke="#ded6c6" stroke-width="1.5"/>
   </g>
-  <circle cx="161" cy="128" r="8" fill="#141413"/>
+  <path d="M48 70h28M48 84h21M48 96h32" stroke="#c96442" stroke-width="5" stroke-linecap="round" opacity=".8"/>
+  <circle cx="49" cy="169" r="5" fill="#3266ad" opacity=".85"/>
+  <path d="m43 195 14-14 9 9 10-12 12 17" fill="none" stroke="#3266ad" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" opacity=".82"/>
+  <path d="M178 70h31M178 84h20M178 96h27" stroke="#437426" stroke-width="5" stroke-linecap="round" opacity=".8"/>
+  <path d="M178 171h28M178 185h18M178 197h30" stroke="#c99a37" stroke-width="5" stroke-linecap="round" opacity=".82"/>
+  <path d="M94 78 C106 78 107 94 118 101" fill="none" stroke="#c96442" stroke-width="10" stroke-linecap="round"/>
+  <path d="M94 178 C106 178 107 162 118 155" fill="none" stroke="#3266ad" stroke-width="10" stroke-linecap="round"/>
+  <path d="M138 103 C151 96 151 78 162 78" fill="none" stroke="#437426" stroke-width="10" stroke-linecap="round"/>
+  <path d="M138 153 C151 160 151 178 162 178" fill="none" stroke="#c99a37" stroke-width="10" stroke-linecap="round"/>
+  <g filter="url(#nodeShadow)">
+    <rect x="108" y="64" width="40" height="128" rx="20" fill="url(#head)" stroke="#163e7a" stroke-width="3"/>
+    <circle cx="128" cy="128" r="26" fill="#fffefa" stroke="#2c63b5" stroke-width="8"/>
+    <circle cx="128" cy="128" r="8" fill="#141413"/>
+  </g>
+  <circle cx="94" cy="78" r="11" fill="#fffefa" stroke="#c96442" stroke-width="6"/>
+  <circle cx="94" cy="178" r="11" fill="#fffefa" stroke="#3266ad" stroke-width="6"/>
+  <circle cx="162" cy="78" r="11" fill="#fffefa" stroke="#437426" stroke-width="6"/>
+  <circle cx="162" cy="178" r="11" fill="#fffefa" stroke="#c99a37" stroke-width="6"/>
 </svg>

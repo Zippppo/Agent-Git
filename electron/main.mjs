@@ -25,6 +25,7 @@ function createMainWindow() {
     minWidth: 980,
     minHeight: 640,
     title: "Agent-Git",
+    icon: path.join(__dirname, "../build/icon.png"),
     backgroundColor: "#f6f7f8",
     show: false,
     webPreferences: {
