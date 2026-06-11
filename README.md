@@ -5,10 +5,10 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Zippppo/Agent-Git/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/Zippppo/Agent-Git?include_prereleases&style=for-the-badge"></a>
-  <a href="https://github.com/Zippppo/Agent-Git/actions/workflows/windows-release.yml"><img alt="Windows release workflow" src="https://img.shields.io/github/actions/workflow/status/Zippppo/Agent-Git/windows-release.yml?branch=main&label=windows%20release&style=for-the-badge"></a>
-  <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/github/license/Zippppo/Agent-Git?style=for-the-badge"></a>
-  <img alt="Node 20+" src="https://img.shields.io/badge/node-20%2B-437426?style=for-the-badge">
+  <a href="https://github.com/Zippppo/Agent-Git/releases/latest"><img alt="Release v0.1.0" src="docs/assets/badges/release.svg" height="38"></a>
+  <a href="https://github.com/Zippppo/Agent-Git/actions/workflows/windows-release.yml"><img alt="Windows installer ready" src="docs/assets/badges/windows.svg" height="38"></a>
+  <a href="LICENSE"><img alt="MIT license" src="docs/assets/badges/license.svg" height="38"></a>
+  <img alt="Node 20 or newer" src="docs/assets/badges/node.svg" height="38">
 </p>
 
 Agent-Git is a local-first desktop workbench for exploratory work. It gives

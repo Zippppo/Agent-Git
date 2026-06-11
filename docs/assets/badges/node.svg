@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="126" height="38" viewBox="0 0 126 38" role="img" aria-label="Node 20 or newer">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="126" y2="38" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fffefa"/>
+      <stop offset="1" stop-color="#eef5eb"/>
+    </linearGradient>
+    <filter id="shadow" x="-8" y="-8" width="142" height="54">
+      <feDropShadow dx="0" dy="1" stdDeviation="1.3" flood-color="#254219" flood-opacity=".12"/>
+    </filter>
+  </defs>
+  <rect x="1" y="1" width="124" height="36" rx="11" fill="url(#bg)" stroke="#d8e2d1" filter="url(#shadow)"/>
+  <path d="m20 8 11 6v10l-11 6-11-6V14z" fill="#eef6ea" stroke="#437426" stroke-width="1.5" stroke-linejoin="round"/>
+  <text x="15" y="23" fill="#437426" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="11" font-weight="900">N</text>
+  <text x="41" y="16" fill="#6f7568" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="10" font-weight="700" letter-spacing=".8">NODE</text>
+  <text x="41" y="28" fill="#151411" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="13" font-weight="800">20+</text>
+</svg>
