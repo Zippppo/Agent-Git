@@ -1,77 +1,83 @@
 # Agent-Git
 
-Agent-Git is a local-first desktop app for exploratory work. It uses Git-style
-checkpoints, `HEAD`, and forks to help you recover working context quickly
-instead of rebuilding it from scattered notes.
+<p align="center">
+  <img src="docs/assets/agent-git-hero.png" alt="Agent-Git visual banner showing branching checkpoints in a polished desktop workspace" width="100%">
+</p>
 
-The project is currently an early MVP. It is usable for local daily planning
-and product feedback, but the renderer is still being split out of its migrated
-prototype structure.
+<p align="center">
+  <a href="https://github.com/Zippppo/Agent-Git/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/Zippppo/Agent-Git?include_prereleases&style=for-the-badge"></a>
+  <a href="https://github.com/Zippppo/Agent-Git/actions/workflows/windows-release.yml"><img alt="Windows release workflow" src="https://img.shields.io/github/actions/workflow/status/Zippppo/Agent-Git/windows-release.yml?branch=main&label=windows%20release&style=for-the-badge"></a>
+  <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/github/license/Zippppo/Agent-Git?style=for-the-badge"></a>
+  <img alt="Node 20+" src="https://img.shields.io/badge/node-20%2B-437426?style=for-the-badge">
+</p>
 
-## Contents
+Agent-Git is a local-first desktop workbench for exploratory work. It gives
+each day a Git-style task map, with checkpoints, `HEAD`, forks, findings, and
+next steps in one recoverable view.
 
-- [Why Agent-Git](#why-agent-git)
-- [Features](#features)
-- [Privacy and Data](#privacy-and-data)
-- [Quick Start](#quick-start)
-- [Development Commands](#development-commands)
-- [Packaging](#packaging)
-- [Project Layout](#project-layout)
-- [Known Limitations](#known-limitations)
-- [Contributing](#contributing)
-- [License](#license)
+It is built for the kind of work that does not move in a straight line:
+research, debugging, product exploration, experiments, agent runs, and any
+project where yesterday's reasoning matters as much as today's todo.
 
-## Why Agent-Git
+<p align="center">
+  <a href="https://github.com/Zippppo/Agent-Git/releases/latest"><strong>Download the latest Windows release</strong></a>
+  ·
+  <a href="PRODUCT.md">Product direction</a>
+  ·
+  <a href="CONTRIBUTING.md">Contributing</a>
+</p>
 
-Complex work often branches, stalls, and loops back. A normal todo list records
-the next action, but it rarely captures why the current path exists.
+## What It Feels Like
 
-Agent-Git gives each day a task map:
+<p align="center">
+  <img src="docs/assets/agent-git-snapshot.png" alt="Agent-Git desktop app screenshot showing daily task roots, checkpoint timelines, HEAD markers, and status controls" width="100%">
+</p>
 
-- Task roots represent parallel work streams.
-- Checkpoints record decisions, findings, completed work, and planned steps.
-- `HEAD` marks the current continuation point for each task.
-- Forks preserve alternate paths without mixing them into the main line.
+Instead of another flat todo list, Agent-Git gives you a daily map:
 
-The goal is simple: when you open the app, you should be able to understand
-where your work stopped and where to continue.
+- Task roots sit side by side, so parallel work streams stay visible.
+- Checkpoints record decisions, completed steps, findings, and planned moves.
+- `HEAD` marks exactly where each task should continue.
+- Forks preserve alternate routes without muddying the main path.
+- Done work can fold away, while the reasoning remains recoverable.
 
-## Features
+## Why It Exists
 
-- Daily snapshot page with unfinished tasks inherited into a new day.
-- Horizontal task root map with vertical checkpoint timelines.
-- Checkpoint states: Planned, Done, HEAD, Finding, Abandoned.
+Complex work branches, stalls, loops back, and leaves evidence behind. A normal
+todo app usually remembers the next action, but not why that action is the
+right one.
+
+Agent-Git is optimized for one morning question: where did I leave off, and
+what should I trust as the current state?
+
+## Highlights
+
+- Local-first desktop app with no accounts, telemetry, analytics, or backend.
+- Daily snapshot page that carries unfinished work forward.
+- Horizontal task map with vertical checkpoint timelines.
+- Checkpoint states: Planned, Done, `HEAD`, Finding, Abandoned.
 - Task states: Active, Blocked, Paused, Done.
-- Keyboard-first growth:
-  - `Enter`: add the next checkpoint for the selected task or checkpoint.
-  - `Ctrl+Enter`: fork from the selected checkpoint.
-  - `Space`: edit the selected task or checkpoint inline.
-- Mouse interactions for selection, status changes, drag reorder, side panel
-  toggles, and inspector resize.
-- Local persistence with `localStorage`.
+- Keyboard-first growth: `Enter` adds a checkpoint, `Ctrl+Enter` forks, and
+  `Space` edits inline.
+- Drag reorder for tasks and checkpoints.
 - Image attachments in the Electron app.
 - JSON export for backup and debugging.
+- Windows installer and zip packages from the release workflow.
 
-## Privacy and Data
+## Install
 
-Agent-Git is local-first. The current app does not include accounts, cloud sync,
-telemetry, analytics, or a remote backend.
+Windows packages are produced by the GitHub Actions release workflow whenever a
+`v*` tag is pushed.
 
-Current storage locations:
+1. Open [Releases](https://github.com/Zippppo/Agent-Git/releases/latest).
+2. Download `Agent-Git-<version>-win-x64.exe` for the installer, or the Windows
+   `.zip` for a portable package.
+3. Run Agent-Git. The app stores its current MVP data locally.
 
-```text
-localStorage:
-  agent-git:mvp:v1
-  agent-git:mvp:prefs:v1
+Unsigned Windows builds may show a SmartScreen warning until the project adds a
+production code-signing certificate.
 
-Electron userData:
-  attachments/
-```
-
-The JSON export action downloads a local backup of the app state. Treat exported
-JSON files as personal data if your tasks contain sensitive notes.
-
-## Quick Start
+## Development
 
 Requirements:
 
@@ -90,39 +96,18 @@ Start the desktop app in development mode:
 npm run dev
 ```
 
-This opens an Agent-Git desktop window. Vite is used behind the scenes for
-renderer hot reload during development.
-
-## Development Commands
-
 Run the browser renderer only:
 
 ```bash
 npm run web:dev
 ```
 
-Run tests:
+Run checks:
 
 ```bash
 npm test
-```
-
-Run TypeScript checks:
-
-```bash
 npm run typecheck
-```
-
-Build the renderer:
-
-```bash
 npm run build
-```
-
-Preview the production renderer build:
-
-```bash
-npm run preview
 ```
 
 ## Packaging
@@ -133,27 +118,60 @@ Build an unpacked desktop app:
 npm run desktop:build
 ```
 
-On Windows, the executable is created at:
+On Windows, the unpacked executable is created at:
 
 ```text
 release/win-unpacked/Agent-Git.exe
 ```
 
-Build distributable packages:
+Build Windows distributables locally:
+
+```bash
+npm run desktop:dist:win
+```
+
+Build all platform targets supported by the current host:
 
 ```bash
 npm run desktop:dist
 ```
 
-For local Windows builds this project disables executable signing by default, so
-the app can be built without code-signing certificates or elevated symlink
-privileges. Production releases should add signing in CI.
+The Windows release workflow runs typecheck, tests, and packaging on
+`windows-latest`, then uploads `.exe`, `.zip`, `.blockmap`, and `latest*.yml`
+artifacts. On tagged pushes, those files are attached to a GitHub Release.
+
+## Privacy And Data
+
+Agent-Git is local-first. The current app does not include accounts, cloud sync,
+telemetry, analytics, or a remote backend.
+
+Current storage locations:
+
+```text
+localStorage:
+  agent-git:mvp:v1
+  agent-git:mvp:prefs:v1
+
+Electron userData:
+  attachments/
+```
+
+The JSON export action downloads a local backup of the app state. Treat exported
+JSON files as personal data if your tasks contain sensitive notes.
 
 ## Project Layout
 
 ```text
 .
-|- index.html                 # Vite app shell
+|- .github/workflows/
+|  `- windows-release.yml     # Windows release automation
+|- build/
+|  |- icon.ico                # Windows app icon
+|  |- icon.png
+|  `- icon.svg
+|- docs/
+|  |- assets/                 # README visuals
+|  `- mvp-single-file.html    # Preserved original single-file prototype
 |- electron/
 |  |- main.mjs                # Electron desktop main process
 |  |- preload.cjs             # Isolated renderer bridge
@@ -163,8 +181,6 @@ privileges. Production releases should add signing in CI.
 |  `- styles.css              # App styles migrated from the MVP
 |- test/
 |  `- zoom-shortcuts.test.mjs # Node test suite
-|- docs/
-|  `- mvp-single-file.html    # Preserved original single-file prototype
 |- PRODUCT.md                 # Product definition and roadmap
 |- CONTRIBUTING.md            # Contribution guide
 |- SECURITY.md                # Security policy
@@ -172,18 +188,18 @@ privileges. Production releases should add signing in CI.
 `- package.json
 ```
 
-## Known Limitations
+## Current Limits
+
+Agent-Git is still pre-1.0:
 
 - The renderer is still a large migrated file and needs domain, storage, and
   view modules.
 - Cross-day lineage is not fully modeled yet. Inherited tasks are currently
   copied into the new day.
-- Forks are currently represented as visual indentation, not a complete branch
-  tree.
+- Forks are represented as visual indentation, not a complete branch tree.
 - Search, import, archive, and undo history are still limited.
-- JSON export is useful for development backup, but it is not a polished user
-  backup format yet.
-- No prebuilt release binaries are published yet. Build from source for now.
+- JSON export is useful for development backup, but it is not yet a polished
+  end-user backup format.
 
 See [PRODUCT.md](PRODUCT.md) for the full product direction.
 

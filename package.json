@@ -21,6 +21,7 @@
     "build": "vite build",
     "desktop:build": "npm run build && electron-builder --dir",
     "desktop:dist": "npm run build && electron-builder",
+    "desktop:dist:win": "npm run build && electron-builder --win --publish=never",
     "preview": "vite preview",
     "test": "node --test",
     "typecheck": "tsc --noEmit"
@@ -38,6 +39,7 @@
   "build": {
     "appId": "dev.agentgit.app",
     "productName": "Agent-Git",
+    "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
     "directories": {
       "output": "release"
     },
@@ -47,11 +49,17 @@
       "package.json"
     ],
     "win": {
+      "icon": "build/icon.ico",
       "signAndEditExecutable": false,
       "target": [
         "nsis",
         "zip"
       ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true
     },
     "mac": {
       "target": [
